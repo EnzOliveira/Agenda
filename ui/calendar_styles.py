@@ -57,3 +57,11 @@ class CalendarStyles:
         fmt = QTextCharFormat()
         fmt.setToolTip("Dia Livre")
         return fmt
+
+    # ----------- DIA DE FOLGA -------------
+    @staticmethod
+    def folgas():
+        fmt = QTextCharFormat()
+        fmt.setBackground(QBrush(QColor("#EFB04C")))
+        fmt.setToolTip("Folga")
+        return fmt

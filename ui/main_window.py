@@ -1,9 +1,11 @@
 from PyQt5.QtWidgets import (
     QWidget, QHBoxLayout, QCalendarWidget, QTableView,
-    QHeaderView, QMessageBox, 
+    QHeaderView, QMessageBox, QMenu
 )
 from PyQt5.QtSql import QSqlDatabase, QSqlTableModel
 from PyQt5.QtCore import QDate
+from PyQt5.QtCore import Qt
+
 import sqlite3
 
 from datetime import date, timedelta
@@ -25,7 +27,6 @@ class JanelaPrincipal(QWidget):
         # ✅ cria o banco
         self.db_manager.criar_banco()
 
-        # ✅ agora esses atributos EXISTEM
         self.bd = self.db_manager.bd
         self.data_min = self.db_manager.data_min
         self.data_max = self.db_manager.data_max
@@ -50,6 +51,14 @@ class JanelaPrincipal(QWidget):
 
         # ---------- personalização calendario ------------
         self.personalizar_calendario()
+
+        # Ativa o menu de contexto
+        self.calendario.setContextMenuPolicy(Qt.CustomContextMenu)
+
+        # Conecta o sinal do botão direito
+        self.calendario.customContextMenuRequested.connect(
+            self.abrir_menu
+        )
 
         # --------- tabela das consultas ---------
         
@@ -119,6 +128,7 @@ class JanelaPrincipal(QWidget):
         lista_dias_cheios = []
         lista_dias_parcialmente_cheios = []
         lista_dias_livres = []
+        self.lista_folgas = []
 
         for data in self.datas:
             cursor.execute(
@@ -149,6 +159,10 @@ class JanelaPrincipal(QWidget):
             qdate = QDate(data.year, data.month, data.day)
             self.calendario.setDateTextFormat(qdate, CalendarStyles.dia_livre())
 
+        for data in self.lista_folgas:
+            qdate = QDate(date.year, date.month, date.day)
+            self.calendario.setDateTextFormat(qdate, CalendarStyles.folgas())
+
         # Reaplica estilo especial se HOJE estiver em alguma lista
         if hoje.toPyDate() in lista_dias_cheios:
             self.calendario.setDateTextFormat(hoje, CalendarStyles.dia_atual_cheio())
@@ -158,3 +172,21 @@ class JanelaPrincipal(QWidget):
             self.calendario.setDateTextFormat(hoje, CalendarStyles.dia_atual())
 
         conexao.close()
+
+    def abrir_menu(self, pos):
+        # Data selecionada no calendário
+        data = self.calendario.selectedDate()
+
+        menu = QMenu(self)
+
+        acao_marcar_folga = menu.addAction("Marcar como folga")
+        acao_remover = menu.addAction("Remover evento")
+
+        # Mostra o menu na posição do mouse
+        acao = menu.exec_(self.calendario.mapToGlobal(pos))
+
+        if acao == acao_marcar_folga:
+            self.lista_folgas.append(data.toString("dd/MM/yyyy"))
+            print(self.lista_folgas)
+        elif acao == acao_remover:
+            print("Remover evento em:", data.toString("dd/MM/yyyy"))
