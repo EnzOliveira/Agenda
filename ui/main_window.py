@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import (
-    QWidget, QHBoxLayout, QCalendarWidget, QTableView,
-    QHeaderView, QMessageBox, QMenu
+    QWidget, QHBoxLayout, QVBoxLayout, QCalendarWidget, QTableView,
+    QHeaderView, QMessageBox, QMenu, QPushButton, QApplication
 )
 from PyQt5.QtSql import QSqlDatabase, QSqlTableModel
 from PyQt5.QtCore import QDate
@@ -14,7 +14,7 @@ import sys
 from database.db_manager import DatabaseManager
 from models.horarios_model import HorariosModel
 from ui.calendar_styles import CalendarStyles
-
+from ui.register_pacients_window import RegistrarPacientes
 
 # Gerar janela
 class JanelaPrincipal(QWidget):
@@ -36,18 +36,19 @@ class JanelaPrincipal(QWidget):
         ]
 
         # Definindo o título e tamanho da janela
-        self.setWindowTitle('Default')
+        self.setWindowTitle('Agenda')
         self.setGeometry(300, 250, 1300, 540)
 
         # Definindo layouts da janela
-        self.layout_principal = QHBoxLayout()
+        self.layout_principal = QVBoxLayout()
+        self.layout_conteudo = QHBoxLayout()
 
         # ---------- calendario ------------
         self.calendario = QCalendarWidget()
         self.calendario.setMinimumDate(self.data_min)
         self.calendario.setMaximumDate(self.data_max)
         self.calendario.selectionChanged.connect(self.filtrar_tebela)
-        self.layout_principal.addWidget(self.calendario)
+        self.layout_conteudo.addWidget(self.calendario)
 
         # ---------- personalização calendario ------------
         self.personalizar_calendario()
@@ -90,8 +91,13 @@ class JanelaPrincipal(QWidget):
         header = self.tabela_horarios.horizontalHeader()
         header.setSectionResizeMode(1, QHeaderView.ResizeToContents)  # segunda coluna se ajusta
         header.setSectionResizeMode(2, QHeaderView.Stretch)           # primeria coluna se expande
-        self.layout_principal.addWidget(self.tabela_horarios)
+        self.layout_conteudo.addWidget(self.tabela_horarios)
 
+        self.agendar_paciente_btn = QPushButton('Agendar Paciente')
+        self.agendar_paciente_btn.clicked.connect(self.abri_janela_registrar_pacientes)
+        self.layout_principal.addWidget(self.agendar_paciente_btn)
+
+        self.layout_principal.addLayout(self.layout_conteudo)
 
         # Setando layouts na janela
         self.setLayout(self.layout_principal)
@@ -190,3 +196,7 @@ class JanelaPrincipal(QWidget):
             print(self.lista_folgas)
         elif acao == acao_remover:
             print("Remover evento em:", data.toString("dd/MM/yyyy"))
+
+    def abri_janela_registrar_pacientes(self):
+        dialog = RegistrarPacientes()
+        dialog.exec_()  # 🔒 trava a janela anterior
