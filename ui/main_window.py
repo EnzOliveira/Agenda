@@ -93,7 +93,7 @@ class JanelaPrincipal(QWidget):
         header.setSectionResizeMode(2, QHeaderView.Stretch)           # primeria coluna se expande
         self.layout_conteudo.addWidget(self.tabela_horarios)
 
-        self.agendar_paciente_btn = QPushButton('Agendar Paciente')
+        self.agendar_paciente_btn = QPushButton('Adicionar Paciente')
         self.agendar_paciente_btn.clicked.connect(self.abri_janela_registrar_pacientes)
         self.layout_principal.addWidget(self.agendar_paciente_btn)
 
@@ -186,7 +186,8 @@ class JanelaPrincipal(QWidget):
         menu = QMenu(self)
 
         acao_marcar_folga = menu.addAction("Marcar como folga")
-        acao_remover = menu.addAction("Remover evento")
+        acao_remover_folga = menu.addAction("Remover evento")
+        acao_marcar_dias_semana = menu.addAction("Agendar paciente para cada 7 dias")
 
         # Mostra o menu na posição do mouse
         acao = menu.exec_(self.calendario.mapToGlobal(pos))
@@ -194,8 +195,10 @@ class JanelaPrincipal(QWidget):
         if acao == acao_marcar_folga:
             self.lista_folgas.append(data.toString("dd/MM/yyyy"))
             print(self.lista_folgas)
-        elif acao == acao_remover:
+        elif acao == acao_remover_folga:
             print("Remover evento em:", data.toString("dd/MM/yyyy"))
+        elif acao == acao_marcar_dias_semana:
+            print("Marcado:", data.toString("dd/MM/yyyy"))
 
     def abri_janela_registrar_pacientes(self):
         dialog = RegistrarPacientes()

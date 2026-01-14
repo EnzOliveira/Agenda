@@ -1,5 +1,6 @@
 from PyQt5.QtWidgets import QApplication, QDialog, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QSpinBox, QGroupBox, QTabWidget, QPushButton, QMessageBox, QInputDialog, QLineEdit, QFileDialog, QFrame
 import sys
+import sqlite3
 
 # Gerar janela
 class RegistrarPacientes(QDialog):
@@ -24,7 +25,6 @@ class RegistrarPacientes(QDialog):
         self.nome_paciente.addItems(op)
         self.layout_principal.addWidget(self.nome_paciente)
 
-
         self.label_dia_semana = QLabel('Dia da Semana')
         self.layout_principal.addWidget(self.label_dia_semana)
 
@@ -34,9 +34,11 @@ class RegistrarPacientes(QDialog):
         self.layout_principal.addWidget(self.dia_semana)
 
         self.cancelar_btn = QPushButton('Cancelar')
+        self.cancelar_btn.clicked.connect(self.cancelar)
         self.layout_frame_botoes.addWidget(self.cancelar_btn)
         
         self.confirmar_btn = QPushButton('Confirmar')
+        self.confirmar_btn.clicked.connect(self.confirmar)
         self.layout_frame_botoes.addWidget(self.confirmar_btn)
 
         self.layout_principal.addWidget(self.frame_botoes)
@@ -45,7 +47,11 @@ class RegistrarPacientes(QDialog):
         self.setLayout(self.layout_principal)
 
     # Inserir aqui funções de ação dos elementos
-    
+    def confirmar(self):
+        pass
+
+    def cancelar(self):
+        pass
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
