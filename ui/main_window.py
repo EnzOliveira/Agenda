@@ -15,6 +15,7 @@ from database.db_manager import DatabaseManager
 from models.horarios_model import HorariosModel
 from ui.calendar_styles import CalendarStyles
 from ui.register_pacients_window import RegistrarPacientes
+from ui.add_pacentes_fixos_window import PacientesFixos
 
 # Gerar janela
 class JanelaPrincipal(QWidget):
@@ -187,7 +188,7 @@ class JanelaPrincipal(QWidget):
 
         acao_marcar_folga = menu.addAction("Marcar como folga")
         acao_remover_folga = menu.addAction("Remover evento")
-        acao_marcar_dias_semana = menu.addAction("Agendar paciente para cada 7 dias")
+        acao_agendar_paciente_fixo = menu.addAction("Agendar paciente para cada 7 dias")
 
         # Mostra o menu na posição do mouse
         acao = menu.exec_(self.calendario.mapToGlobal(pos))
@@ -197,8 +198,9 @@ class JanelaPrincipal(QWidget):
             print(self.lista_folgas)
         elif acao == acao_remover_folga:
             print("Remover evento em:", data.toString("dd/MM/yyyy"))
-        elif acao == acao_marcar_dias_semana:
-            print("Marcado:", data.toString("dd/MM/yyyy"))
+        elif acao == acao_agendar_paciente_fixo:
+            dialog = PacientesFixos()
+            dialog.exec_()
 
     def abri_janela_registrar_pacientes(self):
         dialog = RegistrarPacientes()
