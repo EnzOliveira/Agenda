@@ -1,4 +1,5 @@
 from PyQt5.QtWidgets import QApplication, QDialog, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QSpinBox, QGroupBox, QTabWidget, QPushButton, QMessageBox, QInputDialog, QLineEdit, QFileDialog, QFrame
+from database.db_pacientes import DatabasePacientes
 import sys
 import sqlite3
 
@@ -6,6 +7,11 @@ import sqlite3
 class RegistrarPacientes(QDialog):
     def __init__(self):
         super().__init__()
+
+        # ✅ cria o banco
+        self.db_pacientes = DatabasePacientes()
+        self.db_pacientes.criar_banco()
+
         # Definindo o título e tamanho da janela
         self.setWindowTitle('Registrar Horários de Pacientes')
         self.setGeometry(600, 250, 700, 100)
@@ -21,37 +27,64 @@ class RegistrarPacientes(QDialog):
 
         self.nome_paciente = QComboBox()
         self.nome_paciente.setEditable(True)
-        op = []
-        self.nome_paciente.addItems(op)
+        opcoes = self.atualizar_opcoes() # atualiza a lista de pacientes do ComboBox
+        self.nome_paciente.addItems(opcoes)
         self.layout_principal.addWidget(self.nome_paciente)
 
-        self.label_dia_semana = QLabel('Dia da Semana')
-        self.layout_principal.addWidget(self.label_dia_semana)
-
-        self.dia_semana = QComboBox()
-        dias_semana = ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom']
-        self.dia_semana.addItems(dias_semana)
-        self.layout_principal.addWidget(self.dia_semana)
+        self.adicionar_btn = QPushButton('Adicionar ➕')
+        self.adicionar_btn.clicked.connect(self.adicionar)
+        self.layout_frame_botoes.addWidget(self.adicionar_btn)
+        
+        self.remover_btn = QPushButton('Remover ❌')
+        self.remover_btn.clicked.connect(self.remover)
+        self.layout_frame_botoes.addWidget(self.remover_btn)
 
         self.cancelar_btn = QPushButton('Cancelar')
         self.cancelar_btn.clicked.connect(self.cancelar)
         self.layout_frame_botoes.addWidget(self.cancelar_btn)
         
-        self.confirmar_btn = QPushButton('Confirmar')
-        self.confirmar_btn.clicked.connect(self.confirmar)
-        self.layout_frame_botoes.addWidget(self.confirmar_btn)
-
         self.layout_principal.addWidget(self.frame_botoes)
 
         # Setando layouts na janela
         self.setLayout(self.layout_principal)
 
     # Inserir aqui funções de ação dos elementos
-    def confirmar(self):
+    def adicionar(self):
+            bd = self.db_pacientes.bd
+            conexao = sqlite3.connect(bd)
+            cursor = conexao.cursor()
+
+            nome = self.nome_paciente.currentText()
+
+            try:
+                cursor.execute(
+                    "INSERT INTO pacientes (Nome) VALUES (?)",
+                    (nome,)
+                )
+                conexao.commit()
+
+            except sqlite3.IntegrityError:
+                QMessageBox.warning(self, "Alerta", f'O nome "{nome}" já existe!')
+
+            conexao.close()
+            self.update()
+
+    def remover(self):
         pass
 
     def cancelar(self):
-        pass
+        self.close()
+
+    def atualizar_opcoes(self):
+        bd = self.db_pacientes.bd
+        conexao = sqlite3.connect(bd)
+        cursor = conexao.cursor()
+
+        cursor.execute('SELECT * FROM pacientes')
+        opcoes = cursor.fetchall()
+
+        return [item[0] for item in opcoes]
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

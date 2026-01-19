@@ -5,7 +5,7 @@ import sqlite3
 
 # Gerar janela
 class PacientesFixos(QDialog):
-    def __init__(self):
+    def __init__(self, data_selecionada):
         super().__init__()
         # Definindo o título e tamanho da janela
         self.setWindowTitle('Registrar Horários de Pacientes')
@@ -27,12 +27,12 @@ class PacientesFixos(QDialog):
         self.label_dia_partida = QLabel('Apartir de:')
 
         self.data_partida = QDateEdit()
-        data_inicio = QDate.currentDate()
+        data_inicio = data_selecionada
         data_fim = QDate(2028, 12, 31)
         self.data_partida.setCalendarPopup(True)
         self.data_partida.setMinimumDate(data_inicio)
         self.data_partida.setMaximumDate(data_fim)
-        self.data_partida.setDate(QDate.currentDate())
+        self.data_partida.setDate(data_selecionada)
         self.data_partida.dateChanged.connect(self.atualizar_data_final)
         
         self.label_dia_final = QLabel('Até:')
@@ -70,7 +70,7 @@ class PacientesFixos(QDialog):
         pass
 
     def cancelar(self):
-        pass
+        self.close()
 
     def atualizar_data_final(self, nova_data):
         self.data_final.setMinimumDate(nova_data)

@@ -16,8 +16,8 @@ from models.horarios_model import HorariosModel
 from ui.calendar_styles import CalendarStyles
 from ui.register_pacients_window import RegistrarPacientes
 from ui.add_pacentes_fixos_window import PacientesFixos
+from ui.delegates import ComboBoxDelegate
 
-# Gerar janela
 class JanelaPrincipal(QWidget):
     def __init__(self):
         super().__init__()
@@ -85,6 +85,12 @@ class JanelaPrincipal(QWidget):
         self.tabela_horarios.setMinimumSize(400, 238)
         self.tabela_horarios.hideColumn(0)
         self.tabela_horarios.setSelectionBehavior(QTableView.SelectRows)  # selecionar uma célula seleciona a linha toda
+
+        opcoes = ["Consulta", "Retorno", "Exame"]
+
+        delegate = ComboBoxDelegate(opcoes, self.tabela_horarios)
+        self.tabela_horarios.setItemDelegateForColumn(2, delegate)
+
         
         # interceptar alterações
         self.tabela_horarios.model().dataChanged.connect(self.confirmar_alteracao)
@@ -199,9 +205,12 @@ class JanelaPrincipal(QWidget):
         elif acao == acao_remover_folga:
             print("Remover evento em:", data.toString("dd/MM/yyyy"))
         elif acao == acao_agendar_paciente_fixo:
-            dialog = PacientesFixos()
+            dialog = PacientesFixos(data)
             dialog.exec_()
 
     def abri_janela_registrar_pacientes(self):
         dialog = RegistrarPacientes()
         dialog.exec_()  # 🔒 trava a janela anterior
+
+
+
