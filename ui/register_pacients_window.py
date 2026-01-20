@@ -50,27 +50,48 @@ class RegistrarPacientes(QDialog):
 
     # Inserir aqui funções de ação dos elementos
     def adicionar(self):
-            bd = self.db_pacientes.bd
-            conexao = sqlite3.connect(bd)
-            cursor = conexao.cursor()
+        bd = self.db_pacientes.bd
+        conexao = sqlite3.connect(bd)
+        cursor = conexao.cursor()
 
-            nome = self.nome_paciente.currentText()
-
+        nome = self.nome_paciente.currentText()
+        if nome != "":
             try:
                 cursor.execute(
                     "INSERT INTO pacientes (Nome) VALUES (?)",
                     (nome,)
                 )
                 conexao.commit()
+                QMessageBox.information(self, "Sucesso", f'O nome "{nome}" foi adicionado!')
+
+                self.update()
 
             except sqlite3.IntegrityError:
-                QMessageBox.warning(self, "Alerta", f'O nome "{nome}" já existe!')
+                QMessageBox.warning(self, "Nome existente", f'O nome "{nome}" já existe!')
+        else:
+            QMessageBox.warning(self, "Erro de digitação", 'O nome não pode ser vazio')
 
-            conexao.close()
-            self.update()
+        conexao.close()
 
     def remover(self):
-        pass
+        bd = self.db_pacientes.bd
+        conexao = sqlite3.connect(bd)
+        cursor = conexao.cursor()
+
+        nome = self.nome_paciente.currentText()
+
+        if nome != "":
+            try:
+                print('Deletando...')
+                cursor.execute(f'DELETE FROM pacientes WHERE Nome = "{nome}"')
+                conexao.commit()
+                QMessageBox.information(self, "Sucesso", f'O nome "{nome}" foi removido!')
+                self.update()
+
+            except sqlite3.IntegrityError:
+                QMessageBox.warning(self, "Impossível remover", f'O nome "{nome}" não existe!')
+        else:
+            QMessageBox.warning(self, "Erro de digitação", 'O nome não pode ser vazio')
 
     def cancelar(self):
         self.close()

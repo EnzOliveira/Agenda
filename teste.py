@@ -14,6 +14,14 @@ bd = os.path.join(caminho, "pacientes.db")
 
 conexao = sqlite3.connect(bd)
 cursor = conexao.cursor()
+
+nome = 'Fernando'
+
+cursor.execute(f'DELETE FROM pacientes WHERE Nome = "{nome}"')
+conexao.commit()
+
+
+
 cursor.execute('SELECT * FROM pacientes')
 linhas = cursor.fetchall()
 
