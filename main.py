@@ -5,5 +5,5 @@ from ui.main_window import JanelaPrincipal
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     janela = JanelaPrincipal()
-    janela.show()
+    janela.show()                                     
     sys.exit(app.exec_())

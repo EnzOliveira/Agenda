@@ -1,8 +1,8 @@
 from PyQt5.QtWidgets import (
     QWidget, QHBoxLayout, QVBoxLayout, QCalendarWidget, QTableView,
-    QHeaderView, QMessageBox, QMenu, QPushButton, QApplication
+    QHeaderView, QMessageBox, QMenu, QPushButton, QApplication, QDialog
 )
-from PyQt5.QtSql import QSqlDatabase, QSqlTableModel
+from PyQt5.QtSql import QSqlDatabase, QSqlTableModel, QSqlQueryModel, QSqlQuery
 from PyQt5.QtCore import QDate
 from PyQt5.QtCore import Qt
 
@@ -12,6 +12,7 @@ from datetime import date, timedelta
 import sys
 
 from database.db_manager import DatabaseManager
+from database.db_pacientes import DatabasePacientes
 from models.horarios_model import HorariosModel
 from ui.calendar_styles import CalendarStyles
 from ui.register_pacients_window import RegistrarPacientes
@@ -24,9 +25,13 @@ class JanelaPrincipal(QWidget):
         
         # ✅ cria o gerenciador de banco
         self.db_manager = DatabaseManager()
+        self.db_pacientes = DatabasePacientes()
+        self.conectar_banco_pacientes()
 
-        # ✅ cria o banco
+        # ✅ cria o bancos e modelos
         self.db_manager.criar_banco()
+        self.criar_modelo_pacientes()
+
 
         self.bd = self.db_manager.bd
         self.data_min = self.db_manager.data_min
@@ -86,9 +91,8 @@ class JanelaPrincipal(QWidget):
         self.tabela_horarios.hideColumn(0)
         self.tabela_horarios.setSelectionBehavior(QTableView.SelectRows)  # selecionar uma célula seleciona a linha toda
 
-        opcoes = ["Consulta", "Retorno", "Exame"]
 
-        delegate = ComboBoxDelegate(opcoes, self.tabela_horarios)
+        delegate = ComboBoxDelegate(self.pacientes_model, self.tabela_horarios)
         self.tabela_horarios.setItemDelegateForColumn(2, delegate)
 
         
@@ -101,7 +105,7 @@ class JanelaPrincipal(QWidget):
         self.layout_conteudo.addWidget(self.tabela_horarios)
 
         self.agendar_paciente_btn = QPushButton('Adicionar Paciente')
-        self.agendar_paciente_btn.clicked.connect(self.abri_janela_registrar_pacientes)
+        self.agendar_paciente_btn.clicked.connect(self.abrir_janela_registrar_pacientes)
         self.layout_principal.addWidget(self.agendar_paciente_btn)
 
         self.layout_principal.addLayout(self.layout_conteudo)
@@ -208,9 +212,32 @@ class JanelaPrincipal(QWidget):
             dialog = PacientesFixos(data)
             dialog.exec_()
 
-    def abri_janela_registrar_pacientes(self):
+    def abrir_janela_registrar_pacientes(self):
         dialog = RegistrarPacientes()
-        dialog.exec_()  # 🔒 trava a janela anterior
+        resultado = dialog.exec_()  # 🔒 trava a janela anterior
+        
+        self.atualizar_lista_pacientes(resultado)
+
+    def atualizar_lista_pacientes(self, resultado):
+        query = QSqlQuery(QSqlDatabase.database("pacientes_conn"))
+        query.exec("SELECT Nome FROM pacientes")
+        self.pacientes_model.setQuery(query)
+
+
+    def conectar_banco_pacientes(self):
+        db = QSqlDatabase.addDatabase("QSQLITE", "pacientes_conn")
+        db.setDatabaseName(self.db_pacientes.bd)  # caminho do seu banco
+        if not db.open():
+            print("Erro ao abrir banco de pacientes")
+            return False
+        return True
+
+    def criar_modelo_pacientes(self):
+        query = QSqlQuery(QSqlDatabase.database("pacientes_conn"))
+        query.exec("SELECT Nome FROM pacientes")
+
+        self.pacientes_model = QSqlQueryModel(self)
+        self.pacientes_model.setQuery(query)
 
 
 

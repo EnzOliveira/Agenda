@@ -27,8 +27,8 @@ class RegistrarPacientes(QDialog):
 
         self.nome_paciente = QComboBox()
         self.nome_paciente.setEditable(True)
-        opcoes = self.atualizar_opcoes() # atualiza a lista de pacientes do ComboBox
-        self.nome_paciente.addItems(opcoes)
+        lista_pacientes = self.atualizar_lista_pacientes() # atualiza a lista de pacientes do ComboBox
+        self.nome_paciente.addItems(lista_pacientes)
         self.layout_principal.addWidget(self.nome_paciente)
 
         self.adicionar_btn = QPushButton('Adicionar ➕')
@@ -82,7 +82,6 @@ class RegistrarPacientes(QDialog):
 
         if nome != "":
             try:
-                print('Deletando...')
                 cursor.execute(f'DELETE FROM pacientes WHERE Nome = "{nome}"')
                 conexao.commit()
                 QMessageBox.information(self, "Sucesso", f'O nome "{nome}" foi removido!')
@@ -96,15 +95,15 @@ class RegistrarPacientes(QDialog):
     def cancelar(self):
         self.close()
 
-    def atualizar_opcoes(self):
+    def atualizar_lista_pacientes(self):
         bd = self.db_pacientes.bd
         conexao = sqlite3.connect(bd)
         cursor = conexao.cursor()
 
         cursor.execute('SELECT * FROM pacientes')
-        opcoes = cursor.fetchall()
+        lista_pacientes = cursor.fetchall()
 
-        return [item[0] for item in opcoes]
+        return [item[0] for item in lista_pacientes]
 
 
 if __name__ == "__main__":
