@@ -95,9 +95,9 @@ class JanelaPrincipal(QWidget):
         delegate = ComboBoxDelegate(self.pacientes_model, self.tabela_horarios)
         self.tabela_horarios.setItemDelegateForColumn(2, delegate)
 
-        
         # interceptar alterações
-        self.tabela_horarios.model().dataChanged.connect(self.confirmar_alteracao)
+        delegate.commitData.connect(self.confirmar_alteracao)
+
 
         header = self.tabela_horarios.horizontalHeader()
         header.setSectionResizeMode(1, QHeaderView.ResizeToContents)  # segunda coluna se ajusta
@@ -121,18 +121,21 @@ class JanelaPrincipal(QWidget):
         self.modelo.select()
 
     def confirmar_alteracao(self):
+        if not self.modelo.isDirty():
+            return # nada foi alterado
+
         resposta = QMessageBox.question(
             self,
             "Confirmar alteração",
             "Tem certeza que deseja salvar essa modificação?",
             QMessageBox.Yes | QMessageBox.No
         )
-        if resposta == QMessageBox.No:
-            self.modelo.revertAll()  # desfaz as alterações
-        else:
+        if resposta == QMessageBox.Yes:
             self.modelo.submitAll()  # confirma e grava no banco
             self.personalizar_calendario()
             self.calendario.update()
+        else:
+            self.modelo.revertAll()  # desfaz as alterações
 
     def personalizar_calendario(self):
          # Dia atual
@@ -220,9 +223,8 @@ class JanelaPrincipal(QWidget):
 
     def atualizar_lista_pacientes(self, resultado):
         query = QSqlQuery(QSqlDatabase.database("pacientes_conn"))
-        query.exec("SELECT Nome FROM pacientes")
+        query.exec("SELECT Nome FROM pacientes ORDER BY Nome ASC")
         self.pacientes_model.setQuery(query)
-
 
     def conectar_banco_pacientes(self):
         db = QSqlDatabase.addDatabase("QSQLITE", "pacientes_conn")
@@ -234,7 +236,7 @@ class JanelaPrincipal(QWidget):
 
     def criar_modelo_pacientes(self):
         query = QSqlQuery(QSqlDatabase.database("pacientes_conn"))
-        query.exec("SELECT Nome FROM pacientes")
+        query.exec("SELECT Nome FROM pacientes ORDER BY Nome ASC")
 
         self.pacientes_model = QSqlQueryModel(self)
         self.pacientes_model.setQuery(query)

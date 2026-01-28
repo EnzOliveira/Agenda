@@ -1,4 +1,5 @@
-from PyQt5.QtWidgets import QStyledItemDelegate, QComboBox
+from PyQt5.QtWidgets import QStyledItemDelegate, QComboBox, QMessageBox
+from PyQt5.QtCore import Qt
 
 class ComboBoxDelegate(QStyledItemDelegate):
     def __init__(self, model, parent=None):
@@ -11,6 +12,7 @@ class ComboBoxDelegate(QStyledItemDelegate):
         combo.setModelColumn(0) 
         combo.setEditable(True)
         combo.setInsertPolicy(QComboBox.NoInsert)
+
         return combo
 
     def setEditorData(self, editor, index):
