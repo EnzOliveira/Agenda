@@ -22,6 +22,8 @@ from ui.delegates import ComboBoxDelegate
 class JanelaPrincipal(QWidget):
     def __init__(self):
         super().__init__()
+
+        self.em_processamento = False # variável que trava a chamada de outra tela enquanto tiver uma rodando
         
         # ✅ cria o gerenciador de banco
         self.db_manager = DatabaseManager()
@@ -97,6 +99,14 @@ class JanelaPrincipal(QWidget):
 
         # interceptar alterações
         delegate.commitData.connect(self.confirmar_alteracao)
+        self.nome_paciente = self.modelo.dataChanged.connect(self.celula_alterada)
+
+        self.modelo.dataChanged.connect(
+            lambda tl, br, roles: setattr(
+                self, "horario_atual",
+                self.modelo.data(self.modelo.index(tl.row(), 1))
+            )
+        )
 
 
         header = self.tabela_horarios.horizontalHeader()
@@ -121,21 +131,75 @@ class JanelaPrincipal(QWidget):
         self.modelo.select()
 
     def confirmar_alteracao(self):
-        if not self.modelo.isDirty():
-            return # nada foi alterado
+        # Se a função já estiver rodando, ignora a segunda chamada
+        if self.em_processamento:
+            return
+        
+        # "Tranca" a função
+        self.em_processamento = True
 
-        resposta = QMessageBox.question(
-            self,
-            "Confirmar alteração",
-            "Tem certeza que deseja salvar essa modificação?",
-            QMessageBox.Yes | QMessageBox.No
-        )
-        if resposta == QMessageBox.Yes:
-            self.modelo.submitAll()  # confirma e grava no banco
-            self.personalizar_calendario()
-            self.calendario.update()
-        else:
-            self.modelo.revertAll()  # desfaz as alterações
+        try:
+            if not self.modelo.isDirty():
+                return # nada foi alterado
+
+            resposta = QMessageBox.question(
+                self,
+                "Confirmar alteração",
+                "Tem certeza que deseja salvar essa modificação?",
+                QMessageBox.Yes | QMessageBox.No
+            )
+            if resposta == QMessageBox.Yes:
+                if self.nome_paciente != '':
+                    resposta = QMessageBox.question(
+                        self,
+                        "Agendar próximas datas",
+                        "Deseja agendar o paciente para as próximas semanas?",
+                        QMessageBox.Yes | QMessageBox.No
+                    )
+                    if resposta == QMessageBox.Yes:
+                        data = self.calendario.selectedDate()
+                        print(type(data))
+                        print(type(self.data_max))
+
+                        qtdd_semanas = int((self.data_max - data.toPyDate()).days) // 7 # usado para repetição do FOR
+                        
+                        # Abrir conexão com Banco de Dados de horarios
+                        conexao = sqlite3.connect(self.bd)
+                        cursor = conexao.cursor()
+
+                        # Loop para marcar paciente a cada 7 dias apartir da data escolhida até o fim do calendário
+                        for _ in range(qtdd_semanas):
+                            data = data.addDays(7)
+                            data_str = data.toString("dd-MM-yyyy")
+                            print(data_str)
+                            print(self.horario_atual)
+
+                            cursor.execute("""
+                                UPDATE horarios
+                                SET Nome = ?
+                                WHERE Data = ? AND Horario = ?
+                            """, (self.nome_paciente, data_str, self.horario_atual))
+
+                        # Confirmar alteraçãoes feitas no banco e fecha-lo
+                        conexao.commit()
+                        conexao.close()
+
+                        self.modelo.submitAll()  # confirma e grava no banco
+                        self.personalizar_calendario()
+                        self.calendario.update()
+
+            else:
+                self.modelo.revertAll()  # desfaz as alterações
+
+        finally:
+            # "Destranca" a função ao terminar tudo, mesmo se der erro
+            self.em_processamento = False
+
+    def celula_alterada(self, topLeft, bottomRight, roles):
+        if topLeft.column() == 2:
+            self.nome_paciente = self.tabela_horarios.model().index(topLeft.row(), 2).data()
+
+
 
     def personalizar_calendario(self):
          # Dia atual
