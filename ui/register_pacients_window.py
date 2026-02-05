@@ -1,16 +1,25 @@
 from PyQt5.QtWidgets import QApplication, QDialog, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QSpinBox, QGroupBox, QTabWidget, QPushButton, QMessageBox, QInputDialog, QLineEdit, QFileDialog, QFrame
+from PyQt5.QtCore import pyqtSignal
 from database.db_pacientes import DatabasePacientes
+from database.db_manager import DatabaseManager
 import sys
 import sqlite3
 
 # Gerar janela
 class RegistrarPacientes(QDialog):
+    # 🔔 cria um sinal
+    pacienteAlterado = pyqtSignal()
+    
     def __init__(self):
         super().__init__()
 
+
         # ✅ cria o banco
         self.db_pacientes = DatabasePacientes()
+        self.db_horarios = DatabaseManager()
         self.db_pacientes.criar_banco()
+        self.bd_pacientes = self.db_pacientes.bd
+        self.bd_horarios = self.db_horarios.bd
 
         # Definindo o título e tamanho da janela
         self.setWindowTitle('Registrar Horários de Pacientes')
@@ -50,8 +59,7 @@ class RegistrarPacientes(QDialog):
 
     # Inserir aqui funções de ação dos elementos
     def adicionar(self):
-        bd = self.db_pacientes.bd
-        conexao = sqlite3.connect(bd)
+        conexao = sqlite3.connect(self.bd_pacientes)
         cursor = conexao.cursor()
 
         nome = self.nome_paciente.currentText()
@@ -74,8 +82,7 @@ class RegistrarPacientes(QDialog):
         conexao.close()
 
     def remover(self):
-        bd = self.db_pacientes.bd
-        conexao = sqlite3.connect(bd)
+        conexao = sqlite3.connect(self.bd_pacientes)
         cursor = conexao.cursor()
 
         nome = self.nome_paciente.currentText()
@@ -85,25 +92,44 @@ class RegistrarPacientes(QDialog):
                 cursor.execute(f'DELETE FROM pacientes WHERE Nome = "{nome}"')
                 conexao.commit()
                 QMessageBox.information(self, "Sucesso", f'O nome "{nome}" foi removido!')
+                self.apagar_paciente_do_bd(nome)
+                self.pacienteAlterado.emit()
                 self.update()
 
             except sqlite3.IntegrityError:
                 QMessageBox.warning(self, "Impossível remover", f'O nome "{nome}" não existe!')
         else:
             QMessageBox.warning(self, "Erro de digitação", 'O nome não pode ser vazio')
+        
+        conexao.close()
+
+    def apagar_paciente_do_bd(self, nome):
+        conexao = sqlite3.connect(self.bd_horarios)
+        cursor = conexao.cursor()
+        
+        cursor.execute("""
+            UPDATE horarios
+            SET Nome = NULL
+            WHERE Nome = ?
+        """, (nome,))
+
+        conexao.commit()
+        conexao.close()
 
     def cancelar(self):
         self.close()
 
     def atualizar_lista_pacientes(self):
-        bd = self.db_pacientes.bd
-        conexao = sqlite3.connect(bd)
+        conexao = sqlite3.connect(self.bd_pacientes)
         cursor = conexao.cursor()
 
         cursor.execute('SELECT * FROM pacientes')
         lista_pacientes = cursor.fetchall()
 
+        conexao.close()
+
         return [item[0] for item in lista_pacientes]
+    
 
 
 if __name__ == "__main__":

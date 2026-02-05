@@ -10,7 +10,7 @@ class ComboBoxDelegate(QStyledItemDelegate):
         combo = QComboBox(parent)
         combo.setModel(self.model)
         combo.setModelColumn(0) 
-        combo.setEditable(True)
+        combo.setEditable(False)
         combo.setInsertPolicy(QComboBox.NoInsert)
 
         return combo

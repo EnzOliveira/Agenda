@@ -184,9 +184,7 @@ class JanelaPrincipal(QWidget):
                         conexao.commit()
                         conexao.close()
 
-                        self.modelo.submitAll()  # confirma e grava no banco
-                        self.personalizar_calendario()
-                        self.calendario.update()
+                        self.atualizar_dados()
 
             else:
                 self.modelo.revertAll()  # desfaz as alterações
@@ -198,8 +196,6 @@ class JanelaPrincipal(QWidget):
     def celula_alterada(self, topLeft, bottomRight, roles):
         if topLeft.column() == 2:
             self.nome_paciente = self.tabela_horarios.model().index(topLeft.row(), 2).data()
-
-
 
     def personalizar_calendario(self):
          # Dia atual
@@ -281,6 +277,10 @@ class JanelaPrincipal(QWidget):
 
     def abrir_janela_registrar_pacientes(self):
         dialog = RegistrarPacientes()
+
+        # conecta o sinal à atualização
+        dialog.pacienteAlterado.connect(self.atualizar_dados)
+
         resultado = dialog.exec_()  # 🔒 trava a janela anterior
         
         self.atualizar_lista_pacientes(resultado)
@@ -289,6 +289,11 @@ class JanelaPrincipal(QWidget):
         query = QSqlQuery(QSqlDatabase.database("pacientes_conn"))
         query.exec("SELECT Nome FROM pacientes ORDER BY Nome ASC")
         self.pacientes_model.setQuery(query)
+
+    def atualizar_dados(self):
+        self.modelo.submitAll()  # confirma e grava no banco
+        self.personalizar_calendario()
+        self.calendario.update()
 
     def conectar_banco_pacientes(self):
         db = QSqlDatabase.addDatabase("QSQLITE", "pacientes_conn")
